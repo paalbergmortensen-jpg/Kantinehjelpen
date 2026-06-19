@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    
+    // We assume any authenticated user (e.g. the tablet logged in with an admin/employee account) 
+    // can act as the kiosk. For this simple app, we don't have complex RBAC, just signed-in users.
+    function isKiosk() { return isSignedIn(); }
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['firstName', 'fullName', 'ansattNr', 'ressursNr', 'balance']) &&
+             data.keys().size() == 5 &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() <= 64 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 128 &&
+             data.ansattNr is string && data.ansattNr.size() > 0 && data.ansattNr.size() <= 32 &&
+             data.ressursNr is string && data.ressursNr.size() > 0 && data.ressursNr.size() <= 32 &&
+             data.balance is number && data.balance >= 0;
+    }
+
+    match /users/{userId} {
+      allow read, list: if true;
+      allow update: if true;
+      allow create, delete: if true;
+    }
+    
+    match /menu/{menuId} {
+      allow read, list: if true;
+      allow create, update, delete: if true;
+    }
+    
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'amount', 'items', 'timestamp']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.amount is number && data.amount > 0 &&
+             data.items is string && data.items.size() <= 1024 &&
+             data.timestamp is number;
+    }
+
+    match /transactions/{transactionId} {
+      allow read, list: if isKiosk();
+      
+      allow create: if true;
+                       
+      allow update: if false; // Transactions are immutable
+      allow delete: if false;
+    }
+  }
+}

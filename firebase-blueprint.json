@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A canteen user",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "description": "First name for display"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name"
+        },
+        "ansattNr": {
+          "type": "string",
+          "description": "Employee ID"
+        },
+        "ressursNr": {
+          "type": "string",
+          "description": "Resource ID"
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current unpaid balance"
+        }
+      },
+      "required": ["firstName", "fullName", "ansattNr", "ressursNr", "balance"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A canteen purchase",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Total amount"
+        },
+        "items": {
+          "type": "string",
+          "description": "Comma separated string of items"
+        },
+        "timestamp": {
+          "type": "number",
+          "description": "When"
+        },
+        "adminId": {
+          "type": "string",
+          "description": "Who authorized it (cashier/device)"
+        }
+      },
+      "required": ["userId", "amount", "items", "timestamp", "adminId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "List of all registered users in the canteen system"
+    },
+    "transactions/{transactionId}": {
+      "schema": {
+        "$ref": "#/entities/Transaction"
+      },
+      "description": "Log of all purchases"
+    }
+  }
+}
